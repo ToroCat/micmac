@@ -1,13 +1,12 @@
 #include "ZBufferRaster.h"
 
-cImgZBuffer::cImgZBuffer(cAppliZBufferRaster * anAppli ,const std::string & aNameIm):
+cImgZBuffer::cImgZBuffer(cAppliZBufferRaster * anAppli ,const std::string & aNameIm, bool & aNoTif):
 
     mAppli    (anAppli),
-
     mNameIm   (aNameIm),
-    mTif      (Tiff_Im::StdConv(mAppli->Dir() + mNameIm)),
+    mTif      (aNoTif ? Tiff_Im::StdConv(mAppli->Dir() + "Tmp-MM-Dir/" + aNameIm + "_Ch1.tif"):Tiff_Im::StdConv(mAppli->Dir() + aNameIm)),
     mSzIm     (mTif.sz()),
-    mCam      (mAppli->ICNM()->StdCamOfNames(aNameIm,mAppli->Ori())),
+    mCam      (mAppli->ICNM()->StdCamStenOfNames(aNameIm,mAppli->Ori())),
     mImZ      (round_ni(mSzIm.x*mAppli->Reech()), round_ni(mSzIm.y*mAppli->Reech()), tElZBuf(-1.0)),
     mTImZ     (mImZ),
     mImInd    (round_ni(mSzIm.x*mAppli->Reech()), round_ni(mSzIm.y*mAppli->Reech()), tElZBuf(-1.0)),
