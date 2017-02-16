@@ -1473,10 +1473,42 @@ double cBasicGeomCap3D::GetVeryRoughInterProf() const
    return 1/600.0;
 }
 
-void cBasicGeomCap3D::Save2XmlStdMMName(const std::string &,const std::string & aPref) const
+std::string cBasicGeomCap3D::Save2XmlStdMMName
+     (
+           cInterfChantierNameManipulateur * anICNM,
+           const std::string & aOriOut,
+           const std::string & aNameImClip,
+           const ElAffin2D & anOrIntInit2Cur
+     ) const
 {
     ELISE_ASSERT(false,"CamStenope::Save2XmlStdMMName Not Suported");
+    return "";
 }
+
+
+
+
+std::string  cBasicGeomCap3D::Save2XmlStdMMName
+      (
+           cInterfChantierNameManipulateur * anICNM,
+           const std::string & aOriOut,
+           const std::string & aNameImClip
+      ) const
+{
+    return Save2XmlStdMMName(anICNM,aOriOut,aNameImClip,ElAffin2D::Id());
+}
+
+std::string  cBasicGeomCap3D::Save2XmlStdMMName
+      (
+           cInterfChantierNameManipulateur * anICNM,
+           const std::string & aOriOut,
+           const std::string & aNameImClip,
+           const Pt2dr & aP
+      )  const
+{
+    return Save2XmlStdMMName(anICNM,aOriOut,aNameImClip,ElAffin2D::trans(aP));
+}
+
 
 Pt2dr cBasicGeomCap3D::Mil() const
 {
@@ -1546,7 +1578,6 @@ void cBasicGeomCap3D::ReCalcGlbOrInt()
    mGlobOrImaC2M = mGlobOrImaM2C.inv();
 
    mScaleAfnt = euclid(mGlobOrImaM2C.IVect(Pt2dr(1,1))) / euclid(Pt2dr(1,1));
-   // std::cout << "AAAAA XXXX " << this << mScaleAfnt << "\n"; getchar();
 }
 
 cBasicGeomCap3D::~cBasicGeomCap3D() 
@@ -1555,11 +1586,8 @@ cBasicGeomCap3D::~cBasicGeomCap3D()
 
 Pt3dr cBasicGeomCap3D::OrigineProf () const
 {
-// std::cout << "AAAAAAAAAAAAAAAaa\n";
    Pt3dr aRes =  OpticalCenterOfPixel(Pt2dr(SzBasicCapt3D()) / 2.0);
-// std::cout << "BBBBBBBBbb\n";
    return aRes;
-   // return Pt3dr(SzBasicCapt3D().x / 2.0, SzBasicCapt3D().y / 2.0, 0);
 }
 
 cBasicGeomCap3D::cBasicGeomCap3D() :
@@ -2107,7 +2135,6 @@ bool    ElCamera::PIsVisibleInImage   (const Pt3dr & aPTer,const cArgOptionalPIs
    // Si "vraie" camera et scannee il est necessaire de faire le test maintenant
    // car IsZoneUtil est en mm
 
-  // std::cout << "AAAAAA " << aPF0 << " " << mZoneUtilInPixel << "\n";
    if ( (!GetZoneUtilInPixel()) && ( ! IsInZoneUtile(aPF0))) return false;
 
 
@@ -2924,7 +2951,6 @@ ElPackHomologue  ElCamera::F2toPtDirRayonL3(const ElPackHomologue & aPckIn,ElCam
       }
       else
       {
-          // std::cout << "AAAAAAAAaa " << itP->P1() << itP->P2() <<"\n";
       }
    }
 
@@ -3627,6 +3653,29 @@ cCalibrationInternConique  ElCamera::ExportCalibInterne2XmlStruct(Pt2di aSzIm) c
 
 CamStenope * CamStenope::DownCastCS() { return this; }
 
+std::string CamStenope::Save2XmlStdMMName
+     (
+           cInterfChantierNameManipulateur * anICNM,
+           const std::string & aOriOut,
+           const std::string & aNameImClip,
+           const ElAffin2D & anOrIntInit2Cur
+     ) const 
+{
+    cOrientationConique  aCO = StdExportCalibGlob();
+    std::string aNameOut =  anICNM->Dir() + anICNM->NameOriStenope(aOriOut,aNameImClip);
+    cCalibrationInternConique * aCIO = aCO.Interne().PtrVal();
+    ELISE_ASSERT(aCIO!=0,"cCalibrationInternConique in CamStenope::Save2XmlStdMMName");
+    // cCalibrationInterneRadiale * aMR =aCIO->CalibDistortion().back().ModRad().PtrVal();
+    ElAffin2D aM2C0 = Xml2EL(aCO.OrIntImaM2C());
+    ElAffin2D  aM2CCliped =    anOrIntInit2Cur.inv() * aM2C0;
+    aCO.OrIntImaM2C().SetVal(El2Xml(aM2CCliped));
+    aCO.Interne().Val().PixelSzIm().SetVal(Pt2dr(Tiff_Im::UnivConvStd(aNameImClip).sz()));
+
+    MakeFileXML(aCO,aNameOut);
+
+    return aNameOut;
+}
+
 double  CamStenope::GetRoughProfondeur() const
 {
     if (ProfIsDef())  return mProfondeur;
@@ -3836,15 +3885,6 @@ double CamStenope::ResolutionAngulaire() const
    std::cout << " dddDQ " <<  aMil << " " << aDQ  << aQ0 << aQ1 << "\n"; getchar();
 */
 
-/*
-std::cout << "HHHHh   " <<  aDQ  << " " << 1/Focale() << "\n";
-Pt2dr aM2 = aMil+Pt2dr(aEps,0);
-
-std::cout << "AAAAAAAAAAAAAAAAaa " <<  Proj().DirRayon(DistInverse(aMil)) - Proj().DirRayon(DistInverse(aM2)) << "\n" ;
-std::cout << "AAAAAAAAAAAAAAAAaa " << DistInverse(aMil) <<  DistInverse(aMil) - DistInverse(aM2) << "\n" ;
-std::cout << "HHHHh   " <<  aDQ  << " " << 1/Focale() << "\n";
-getchar();
-*/
 
     return aDQ;
 /*

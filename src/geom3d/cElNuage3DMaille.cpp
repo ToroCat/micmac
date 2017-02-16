@@ -241,7 +241,7 @@ cElNuage3DMaille::cElNuage3DMaille
                            mParams.Orientation().OrIntImaM2C().Val(),
                            cBasicGeomCap3D::StdGetFromFile(mParams.NameOri().Val(),mITypeCam),
                            aNameFile,
-                           "toto203.tif"
+                           aDir+mParams.PN3M_Nuage().Image_Profondeur().Val().Image() // Ne Sert que pour la taille ?
                        )  :  
                        Cam_Gen_From_XML(mParams.Orientation(),mICNM,aNameFile)     
                   ),
@@ -1580,12 +1580,6 @@ cElNuage3DMaille *   cElNuage3DMaille::BasculeInThis
     cElNuage3DMaille * aNuageRes = this;
 
 
-
-if (MPD_MM())
-{
-    std::cout << "AAAAAAbbsc " << aMntBasc.sz() << "\n";
-}
-
     // Pt2di anOfOutInit= anOfOut;
     if (AutoResize)
     {
@@ -2076,12 +2070,10 @@ cFileOriMnt ToFOM(const cXML_ParamNuage3DMaille & aXML,bool StdRound)
 
     if (StdRound)
     {
-// std::cout << "AAAAAAAAAAaa " << aResolPlani <<  " " << aResA<< "\n";
         ToFOMResolStdRound(aResolPlani.x);
         ToFOMResolStdRound(aResolPlani.y);
         ToFOMResolStdRound(aResA);
 
-// std::cout << "BBBBB " << anOriPlani << " " << anOriA << "\n";
         ToFOMOriStdRound(anOriPlani.x,aResolPlani.x);
         ToFOMOriStdRound(anOriPlani.y,aResolPlani.y);
         ToFOMOriStdRound(anOriA,aResA);

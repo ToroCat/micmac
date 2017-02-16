@@ -76,6 +76,7 @@ CameraRPC::CameraRPC(const std::string &aNameFile, const double aAltiSol) :
     /* Z Min/Max */
     SetAltisSolMinMax(Pt2dr(mRPC->GetGrC31(),mRPC->GetGrC32()));
 
+	SetEmpriseSol();
 }
 
 /* Constructor that takes original RPC fiels as input */
@@ -101,6 +102,7 @@ CameraRPC::CameraRPC(const std::string &aNameFile,
     /* Z Min/Max */
     SetAltisSolMinMax(Pt2dr(mRPC->GetGrC31(),mRPC->GetGrC32()));
 
+	SetEmpriseSol();
 }
 
 cBasicGeomCap3D * CameraRPC::CamRPCOrientGenFromFile(const std::string & aName, const eTypeImporGenBundle aType, const cSystemeCoord * aChSys)
@@ -434,14 +436,16 @@ bool CameraRPC::ProfIsDef() const
 
 void CameraRPC::SetAltiSol(double aZ)
 {
-	int aK;
+
     
 	mAltiSol = aZ;
     mAltisSolIsDef = true;
 	
 
 
+/*	int aK;
 	Box2dr aBox(Pt2dr(0,0),Pt2dr(SzBasicCapt3D()));
+
 	Pt2dr aP4Im[4];
 	aBox.Corners(aP4Im);
 
@@ -478,6 +482,64 @@ void CameraRPC::SetAltiSol(double aZ)
 	mBoxSol = Box2dr(aP0,aP1);
 	mEmpriseSol = cElPolygone();
 	mEmpriseSol.AddContour(aCont,false);
+*/
+
+}
+
+void CameraRPC::SetContourUtile()
+{
+
+	if (mContourUtile.empty())
+	{
+
+		
+		Box2dr aBox(Pt2dr(0,0),Pt2dr(SzBasicCapt3D()));
+		Pt2dr aP4Im[4];
+		aBox.Corners(aP4Im);
+
+
+		int aK;
+		for (aK=0 ; aK<4 ; aK++)
+			mContourUtile.push_back(aP4Im[aK]);
+    	
+	}
+
+
+}
+
+void CameraRPC::SetEmpriseSol()
+{
+
+	double aZ = GetAltiSol();	
+	SetContourUtile();
+
+
+
+	int aK;
+	Pt2dr aP0,aP1;
+	std::vector<Pt2dr>  aCont;	
+
+	for (aK=0 ; aK<int(ContourUtile().size()) ; aK++)
+	{
+		Pt2dr aCk= ContourUtile()[aK];
+
+		Pt3dr aPTer = ImEtZ2Terrain(aCk,aZ);
+		Pt2dr aP2T(aPTer.x,aPTer.y);
+		if (aK==0)
+		{
+			aP0 = aP2T;
+			aP1 = aP2T;
+		}
+		else
+		{
+			aP0.SetInf(aP2T);
+			aP1.SetSup(aP2T);
+		}
+		aCont.push_back(aP2T);
+	}
+	mBoxSol = Box2dr(aP0,aP1);
+	mEmpriseSol.AddContour(mBoxSol.Contour(),false);
+
 }
 
 void CameraRPC::SetAltisSolMinMax(Pt2dr aP)
@@ -783,9 +845,13 @@ void CameraRPC::ExpImp2Bundle(std::vector<std::vector<ElSeg3D> > aGridToExp) con
     }
 }
 
-void CameraRPC::Save2XmlStdMMName(const std::string &aName,const std::string & aPref) const
+std::string CameraRPC::Save2XmlStdMMName(  cInterfChantierNameManipulateur * anICNM,
+                               const std::string & aOriOut,
+                               const std::string & aNameImClip,
+                               const ElAffin2D & anOrIntInit2Cur
+                    ) const
 {
-    mRPC->Save2XmlStdMMName(aName,aPref);
+    return mRPC->Save2XmlStdMMName(anICNM,aOriOut,aNameImClip,anOrIntInit2Cur);
 }
 
 /******************************************************/
@@ -1291,7 +1357,7 @@ void cRPC::FilSampDenCoeff(T& aXml, double (&aSDC)[20]) const
    aXml.SAMP_DEN_COEFF_20() = aSDC[19];  
 }
 
-void cRPC::Save2XmlStdMMName_(cRPC &aRPC, const std::string &aName)
+std::string cRPC::Save2XmlStdMMName_(cRPC &aRPC, const std::string &aName)
 {
    /* Change the coordinate sytem to original geodetic */
    aRPC.ChSysRPC(aRPC.mChSys);
@@ -1373,10 +1439,19 @@ void cRPC::Save2XmlStdMMName_(cRPC &aRPC, const std::string &aName)
    MakeFileXML(aXml_RPC,aName);
    std::cout << "Saved to: " << aName << "\n";
     
+   return aName;
 }
 
-void cRPC::Save2XmlStdMMName(const std::string &aName,const std::string & aPref)
+std::string cRPC::Save2XmlStdMMName(  cInterfChantierNameManipulateur * anICNM,
+                               const std::string & aOriOut,
+                               const std::string & aNameImClip,
+                               const ElAffin2D & anOrIntInit2Cur
+                    )
+
 {
+  // aOriOut == "" => convention pour cas special appel a l'ancienne
+    std::string aName = (aOriOut=="")? aNameImClip  : anICNM->StdNameCamGenOfNames(aOriOut,aNameImClip);
+    std::string aPref = (aOriOut=="") ? "" :  anICNM->Dir() ;
     /* Create new RPC */
     cRPC aRPCSauv(aName);
    
@@ -1405,9 +1480,10 @@ void cRPC::Save2XmlStdMMName(const std::string &aName,const std::string & aPref)
     cXml_CamGenPolBundle aXMLNew = aPolNew.ToXml();
 
 
-    MakeFileXML(aXMLNew,aNewDirLoc+NameWithoutDir(aNameGenXml));
+    std::string aNameXmlFinal = aNewDirLoc+NameWithoutDir(aNameGenXml);
+    MakeFileXML(aXMLNew,aNameXmlFinal);
 
-
+    return aNameXmlFinal;
 }
 
 bool cRPC::AutoDetermineGRIDFile(const std::string &aFile) const
@@ -3843,7 +3919,7 @@ int RecalRPC_main(int argc,char ** argv)
     std::list<std::string>::iterator itL=aListFile.begin();
     for( ; itL !=aListFile.end(); itL++ )
     {
-        cRPC::Save2XmlStdMMName(aDir + (*itL),"");
+        cRPC::Save2XmlStdMMName(0,"",(*itL),ElAffin2D::Id());
     }
     
    
@@ -4202,31 +4278,38 @@ cAppli_TestCamRPC::cAppli_TestCamRPC(int argc,char** argv) :
                }
            }
        }
-       aMoyVarGrad /= aNbTest;
-       aMoyDistReproj /= aNbTest;
-       std::cout << "####### " << aName << "\n";
-       std::cout << "  Size=" << aSzIm <<  " Z-Interv=" << aZInt << "\n";
-       std::cout << " DistReproj Max= " << aMaxDifRepr << " Moy=" << aMoyDistReproj << "\n";
-       std::cout << " Grad Max=" << aMaxVarGrad << " Moy=" << aMoyVarGrad << "\n";
-
-       std::cout << " SignDenTer " << (aDenPosXTer*100.0) / aNbTest << " " << (aDenPosYTer*100.0) / aNbTest << "\n";
-       std::cout << " SignDenIm  " << (aDenPosXIm*100.0) / aNbTest << " " << (aDenPosYIm*100.0) / aNbTest << "\n";
-       std::cout << " SignNumTer " << (aNumPosXTer*100.0) / aNbTest << " " << (aNumPosYTer*100.0) / aNbTest << "\n";
-       std::cout << " SignNumIm  " << (aNumPosXIm*100.0) / aNbTest << " " << (aNumPosYIm*100.0) / aNbTest << "\n";
-
-
-       std::cout << " Interv Den IM  X:[" << MinDenXIm << "," << MaxDenXIm  << "] Y:[" << MinDenYIm << "," << MaxDenYIm << "]\n";
-       std::cout << " Interv Den Ter  X:[" << MinDenXTer << "," << MaxDenXTer  << "] Y:[" << MinDenYTer << "," << MaxDenYTer << "]\n";
-       // double MaxDenXIm = -1e5,MaxDenYIm = -1e5,MaxDenXTer = -1e5,MaxDenYTer = -1e5;
-       // double MinDenXIm = +1e5,MinDenYIm = +1e5,MinDenXTer = +1e5,MinDenYTer = +1e5;
-       if (mDoPlyErr||mDoPlySignXTer||mDoPlySignYTer||mDoPlySignXIm||mDoPlySignYIm)
+       if (aNbTest >0)
        {
-          double aD = sqrt(ElSquare(mNbZ)+ElSquare(mNbXY));
-          aPlyErr.AddCube(cPlyCloud::Green,cPlyCloud::Red,cPlyCloud::Blue,Pt3dr(0,0,0),Pt3dr(mNbXY,mNbXY,mNbZ),aD*0.04,200);
+          aMoyVarGrad /= aNbTest;
+          aMoyDistReproj /= aNbTest;
+          std::cout << "####### " << aName << "\n";
+          std::cout << "  Size=" << aSzIm <<  " Z-Interv=" << aZInt << "\n";
+          std::cout << " DistReproj Max= " << aMaxDifRepr << " Moy=" << aMoyDistReproj << "\n";
+          std::cout << " Grad Max=" << aMaxVarGrad << " Moy=" << aMoyVarGrad << "\n";
+
+          std::cout << " SignDenTer " << (aDenPosXTer*100.0) / aNbTest << " " << (aDenPosYTer*100.0) / aNbTest << "\n";
+          std::cout << " SignDenIm  " << (aDenPosXIm*100.0) / aNbTest << " " << (aDenPosYIm*100.0) / aNbTest << "\n";
+          std::cout << " SignNumTer " << (aNumPosXTer*100.0) / aNbTest << " " << (aNumPosYTer*100.0) / aNbTest << "\n";
+          std::cout << " SignNumIm  " << (aNumPosXIm*100.0) / aNbTest << " " << (aNumPosYIm*100.0) / aNbTest << "\n";
 
 
-          aPlyErr.PutFile(StdPrefix(aName) +"-Err.ply");
+          std::cout << " Interv Den IM  X:[" << MinDenXIm << "," << MaxDenXIm  << "] Y:[" << MinDenYIm << "," << MaxDenYIm << "]\n";
+          std::cout << " Interv Den Ter  X:[" << MinDenXTer << "," << MaxDenXTer  << "] Y:[" << MinDenYTer << "," << MaxDenYTer << "]\n";
+          // double MaxDenXIm = -1e5,MaxDenYIm = -1e5,MaxDenXTer = -1e5,MaxDenYTer = -1e5;
+          // double MinDenXIm = +1e5,MinDenYIm = +1e5,MinDenXTer = +1e5,MinDenYTer = +1e5;
+          if (mDoPlyErr||mDoPlySignXTer||mDoPlySignYTer||mDoPlySignXIm||mDoPlySignYIm)
+          {
+             double aD = sqrt(ElSquare(mNbZ)+ElSquare(mNbXY));
+             aPlyErr.AddCube(cPlyCloud::Green,cPlyCloud::Red,cPlyCloud::Blue,Pt3dr(0,0,0),Pt3dr(mNbXY,mNbXY,mNbZ),aD*0.04,200);
+
+
+             aPlyErr.PutFile(StdPrefix(aName) +"-Err.ply");
+          }
        }
+
+       Pt3dr aDirC =  aBGC->Capteur2RayTer(Pt2dr(aBGC->SzBasicCapt3D())/2.0).TgNormee();
+
+       std::cout << "DIR Rayon X: " << aDirC.x << " " << aDirC.y << "\n";
    }
 
 

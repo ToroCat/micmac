@@ -573,7 +573,7 @@ int Idem_main(int argc,char ** argv);
 int ConvSensXml2Txt_main(int argc,char ** argv);
 int CleanTxtPS_main(int argc,char ** argv);
 int CheckPatCple_main(int argc,char ** argv);
-
+int ConvPSHomol2MM_main(int argc,char ** argv);
 extern int BasculePtsInRepCam_main(int argc,char ** argv);
 extern int BasculeCamsInRepCam_main(int argc,char ** argv);
 
@@ -623,6 +623,8 @@ int Test_TomCan(int argc,char ** argv);
 int TestMartini_Main(int argc,char ** argv);
 
 int TestGiang_main(int argc,char ** argv);
+
+int GetSpace_main(int argc, char ** argv);
 
 int TestDetecteur_main(int argc,char ** argv);
 
@@ -746,6 +748,7 @@ const std::vector<cMMCom> & TestLibAvailableCommands()
 	   aRes.push_back(cMMCom("XmlSensib2Txt",ConvSensXml2Txt_main,"Tool to convert .xml Sensibility File 2 .txt file",cArgLogCom(2)));
 	   aRes.push_back(cMMCom("CleanTxtPS", CleanTxtPS_main,"Tool to clean .txt file output of PhotoScan Aero",cArgLogCom(2)));
 	   aRes.push_back(cMMCom("CheckPatCple", CheckPatCple_main,"Tool to check a Pattern and an .xml File Cple",cArgLogCom(2)));
+	   aRes.push_back(cMMCom("ConvPSHomol2MM", ConvPSHomol2MM_main, "Tool to convert Tie Points from PhotoScan to MicMac format",cArgLogCom(2)));
 	      
        aRes.push_back(cMMCom("RHH",RHH_main,"In dev estimation of global 2D homography  "));
        aRes.push_back(cMMCom("RHHComputHom",RHHComputHom_main,"Internal : compute Hom for // in RHH  "));
@@ -824,6 +827,8 @@ const std::vector<cMMCom> & TestLibAvailableCommands()
         aRes.push_back(cMMCom("TestMartini",TestMartini_Main,"Test Martini with simulation"));
 
         aRes.push_back(cMMCom("Test_Giang",TestDetecteur_main,"Test Giang"));
+        aRes.push_back(cMMCom("GetSpace",GetSpace_main,"Delete all temporary file after treatment complete"));
+
         aRes.push_back(cMMCom("TiepTriPrl",TiepTriPrl_main,"Paralelliser version of TiepTri"));
         aRes.push_back(cMMCom("TiepTri",TiepTri_Main," Once again Test Correlation by Mesh"));
         aRes.push_back(cMMCom("TaskCorrel",TaskCorrel_main,"Creat Correlation Task XML file for TiepTri"));
@@ -865,6 +870,8 @@ extern int Aster2Grid_main(int argc, char **argv);
 extern int AsterDestrip_main(int argc, char **argv);
 extern int SATtoBundle_main(int argc,char ** argv);
 extern int SATvalid_main(int argc,char ** argv);
+extern int SATTrajectory_main(int argc,char ** argv);
+extern int SatEmpriseSol_main(int argc,char ** argv);
 extern int CalcBsurH_main(int argc,char ** argv);
 extern int CPP_SATDef2D_main(int argc,char ** argv);
 extern int CPP_TestRPCDirectGen(int argc,char ** argv);
@@ -892,6 +899,8 @@ const std::vector<cMMCom> & SateLibAvailableCommands()
     aRes.push_back(cMMCom("AsterDestrip", AsterDestrip_main, "Destrip Aster Images "));
     aRes.push_back(cMMCom("SATtoBundle", SATtoBundle_main, "Export a satellite image to a grid of bundles"));
     aRes.push_back(cMMCom("SATValid", SATvalid_main, "Validate the prj function by either retrieving the line of optical centers or the provided GCPs"));
+    aRes.push_back(cMMCom("SatFootprint", SatEmpriseSol_main, "Satellite foortprints in ply"));
+    aRes.push_back(cMMCom("SatTrajectory", SATTrajectory_main, "Satellite trajectories in ply"));
     aRes.push_back(cMMCom("BsurH", CalcBsurH_main, "Calculate the b/h ratio for a pattern of images"));
     aRes.push_back(cMMCom("SATD2D", CPP_SATDef2D_main, "Visualize 2D deformation fields of a pushbroom image"));
     aRes.push_back(cMMCom("TestRPC", CPP_TestRPCDirectGen, "Test the calculation of direct RPCs"));

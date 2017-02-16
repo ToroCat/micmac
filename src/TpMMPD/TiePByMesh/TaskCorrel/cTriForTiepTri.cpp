@@ -24,15 +24,15 @@ bool cTriForTiepTri::reprj(cImgForTiepTri * aImg)
     Pt3dr Pt2 = mTri3D_.P2();
     Pt3dr Pt3 = mTri3D_.P3();
     if      (
-                  aImg->Cam()->PIsVisibleInImage(Pt1)
-              &&  aImg->Cam()->PIsVisibleInImage(Pt2)
-              &&  aImg->Cam()->PIsVisibleInImage(Pt3)
+                  aImg->CamGen()->PIsVisibleInImage(Pt1)
+              &&  aImg->CamGen()->PIsVisibleInImage(Pt2)
+              &&  aImg->CamGen()->PIsVisibleInImage(Pt3)
             )
     {
         mrprjOK = true;
-        mPt1 = aImg->Cam()->Ter2Capteur(Pt1);
-        mPt2 = aImg->Cam()->Ter2Capteur(Pt2);
-        mPt3 = aImg->Cam()->Ter2Capteur(Pt3);
+        mPt1 = aImg->CamGen()->Ter2Capteur(Pt1);
+        mPt2 = aImg->CamGen()->Ter2Capteur(Pt2);
+        mPt3 = aImg->CamGen()->Ter2Capteur(Pt3);
         return true;
     }
     else
@@ -96,9 +96,17 @@ double cTriForTiepTri::valElipse(int & aNInter)
                                                 aPtPIm0,aPtPIm1,aPtPIm2
                                              );
         //calcul vector max min pour choisir img master
-            double vecA_cr =  aAffLc2Im.I10().x*aAffLc2Im.I10().x + aAffLc2Im.I10().y*aAffLc2Im.I10().y;
-            double vecB_cr =  aAffLc2Im.I01().x*aAffLc2Im.I01().x + aAffLc2Im.I01().y*aAffLc2Im.I01().y;
-            double AB_cr   =  pow(aAffLc2Im.I10().x*aAffLc2Im.I01().x,2) + pow(aAffLc2Im.I10().y*aAffLc2Im.I01().y,2);
+            // double vecA_cr =  aAffLc2Im.I10().x*aAffLc2Im.I10().x + aAffLc2Im.I10().y*aAffLc2Im.I10().y;
+            double vecA_cr =  square_euclid(aAffLc2Im.I10());
+            //  double vecB_cr =  aAffLc2Im.I01().x*aAffLc2Im.I01().x + aAffLc2Im.I01().y*aAffLc2Im.I01().y;
+            double vecB_cr = square_euclid(aAffLc2Im.I01());
+
+
+            //  double AB_cr   =  pow(aAffLc2Im.I10().x*aAffLc2Im.I01().x,2) + pow(aAffLc2Im.I10().y*aAffLc2Im.I01().y,2);
+
+             double AB_cr =  ElSquare(scal(aAffLc2Im.I10(),aAffLc2Im.I01()));
+
+
 	    //double theta_max =  vecA_cr + vecB_cr +sqrt((vecA_cr - vecB_cr) + 4*AB_cr)*(0.5);
             //Interaction : disp ellipse on image:
             if (aNInter > 1)
@@ -138,7 +146,19 @@ double cTriForTiepTri::valElipse(int & aNInter)
                 if (mNumImg == int(mAppli->VVW().size() - 1))
                     aVW->clik_in();
             }
-            return (vecA_cr + vecB_cr - sqrt((vecA_cr - vecB_cr) + 4*AB_cr)*(0.5));
+
+            double aDisc = ElSquare(vecA_cr - vecB_cr) + 4*AB_cr;
+
+/*
+std::cout <<"Discr = " << aDisc << "\n";
+if (aDisc <0)
+{
+    std::cout << "=====================\n";
+    getchar();
+}
+*/
+
+            return (vecA_cr + vecB_cr - sqrt(aDisc))  / 2.0 ;
         }
         else
         {
